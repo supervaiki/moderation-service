@@ -1,3 +1,9 @@
+const { errorResponse } = require('../utils/response');
+
+const notFoundHandler = (req, res, next) => {
+  errorResponse(res, 404, `Route not found: ${req.originalUrl}`);
+};
+
 const errorHandler = (err, req, res, next) => {
   // Log détaillé 
   console.error('Error Details:', err);
@@ -20,4 +26,9 @@ const errorHandler = (err, req, res, next) => {
   errorResponse(res, statusCode, message, {
     error: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
+};
+
+module.exports = {
+  errorHandler,
+  notFoundHandler
 };

@@ -9,25 +9,16 @@ const swaggerOptions = {
       title: 'Moderation Service API - SenAnnonces.sn',
       version: '1.0.0',
       description: 'Service de modération pour la plateforme SenAnnonces.sn. Valide et approuve/rejette les annonces avant publication. Communique avec le service annonce-service (Spring Boot).',
-      contact: {
-        name: 'API Support',
-        email: 'support@senannoncess.sn'
-      }
+      
     },
     servers: [
       {
         url: 'http://localhost:3002',
         description: 'Development server'
       },
-      {
-        url: 'http://localhost:3002/api',
-        description: 'API Base URL'
-      }
+      
     ],
-    externalDocs: {
-      description: 'Architecture diagram and workflow',
-      url: 'http://localhost:3002/api-docs'
-    },
+    
     components: {
       schemas: {
         Annonce: {

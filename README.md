@@ -1,38 +1,27 @@
-Voici le contenu complet de votre fichier **README.md** au format Markdown (`.md`). Vous pouvez copier et coller ce bloc directement dans votre fichier.
 
 ```markdown
 # Moderation Service API - SenAnnonces.sn
 
-Service de modération pour la plateforme SenAnnonces.sn (Node.js + Express).
+Service de modération pour la plateforme SenAnnonces.sn. Ce microservice valide, approuve et rejette les annonces avant leur publication. Développé en Node.js avec Express.
 
-## 🏗️ Architecture
+## Architecture
 
-Ce service fait partie d'une architecture microservices à 2 services:
+Ce service s'inscrit dans une architecture microservices et interagit directement avec le backend principal :
 
-```
-┌─────────────────────┐
-│ Annonce Service     │
-│ (Spring Boot)       │
-│ Port 8080           │
-└──────────┬──────────┘
-           │ API Calls
-           │
-┌──────────▼──────────┐
-│ Moderation Service  │
-│ (Node.js/Express)   │
-│ Port 3002           │
-└─────────────────────┘
-```
+- **Annonce Service (Spring Boot)** : Gère la création et le cycle de vie global des annonces.
+- **Moderation Service (Node.js/Express)** : Isole la logique de modération (approbation et rejet) via des API REST dédiées.
 
-## 📋 Workflow
+## Flux de Modération
 
-1. **Créer annonce** → Statut = `EN_ATTENTE`
-2. **Soumettre** → Appel au moderation-service
-3. **Modération**:
-   - ✅ **APPROUVEE** → Annonce devient `PUBLIEE` dans annonce-service
-   - ❌ **REJETEE** → Annonce reste `REJETEE` dans annonce-service
+Le processus de modération suit les étapes suivantes:
 
-## 🚀 Installation
+1. Création d'annonce: Statut initial = EN_ATTENTE
+2. Soumission: Appel au service de modération
+3. Modération:
+   - Approbation: L'annonce est publiée (statut = PUBLIEE)
+   - Rejet: L'annonce est marquée comme rejetée (statut = REJETEE)
+
+## Installation et Configuration
 
 ### Prérequis
 
@@ -43,7 +32,7 @@ Ce service fait partie d'une architecture microservices à 2 services:
 
 ### Étapes
 
-1. **Cloner le projet**
+1. Accéder au répertoire du projet
    ```bash
    cd moderation-service
    ```
@@ -89,7 +78,7 @@ Ce service fait partie d'une architecture microservices à 2 services:
    npm run dev
    ```
 
-## 📚 API Endpoints
+## Endpoints API
 
 ### 1. Approuver une annonce
 
@@ -97,12 +86,12 @@ Ce service fait partie d'une architecture microservices à 2 services:
 PATCH /api/moderations/{annonceId}/approve
 ```
 
-**Description**: Approuve une annonce et la publie dans annonce-service
+Approuve une annonce et met à jour son statut à PUBLIEE dans le service Spring Boot.
 
-**Parameters**:
-- `annonceId` (path, integer, required): ID de l'annonce
+**Paramètres**:
+- `annonceId` (chemin, entier, obligatoire): Identifiant de l'annonce
 
-**Response Success (200)**:
+**Réponse Succès (200)**:
 ```json
 {
   "success": true,
@@ -116,9 +105,9 @@ PATCH /api/moderations/{annonceId}/approve
 }
 ```
 
-**Response Error**:
-- `400`: Annonce ID missing
-- `409`: Annonce déjà modérée
+**Codes d'erreur**:
+- `400`: L'identifiant de l'annonce est manquant
+- `409`: Conflit - L'annonce a déjà été modérée
 - `500`: Erreur serveur
 
 ---
@@ -130,17 +119,17 @@ PATCH /api/moderations/{annonceId}/reject
 Content-Type: application/json
 
 {
-  "reason": "Annonce contient du contenu inapproprié"
+  "reason": "Motif du rejet"
 }
 ```
 
-**Description**: Rejette une annonce avec une raison
+Rejette une annonce et met à jour son statut à REJETEE dans le service Spring Boot.
 
-**Parameters**:
-- `annonceId` (path, integer, required): ID de l'annonce
-- `reason` (body, string, optional): Raison du rejet
+**Paramètres**:
+- `annonceId` (chemin, entier, obligatoire): Identifiant de l'annonce
+- `reason` (corps, chaîne, optionnel): Motif du rejet
 
-**Response Success (200)**:
+**Réponse Succès (200)**:
 ```json
 {
   "success": true,
@@ -149,7 +138,7 @@ Content-Type: application/json
     "id": "MOD-1715394827123-8901",
     "annonceId": 1,
     "status": "REJETEE",
-    "reason": "Annonce contient du contenu inapproprié"
+    "reason": "Motif du rejet"
   }
 }
 ```
@@ -162,10 +151,10 @@ Content-Type: application/json
 GET /api/moderations/{annonceId}
 ```
 
-**Parameters**:
-- `annonceId` (path, integer, required): ID de l'annonce
+**Paramètres**:
+- `annonceId` (chemin, entier, obligatoire): Identifiant de l'annonce
 
-**Response (200)**:
+**Réponse (200)**:
 ```json
 {
   "success": true,
@@ -187,7 +176,7 @@ GET /api/moderations/{annonceId}
 GET /api/moderations/stats
 ```
 
-**Response (200)**:
+**Réponse (200)**:
 ```json
 {
   "success": true,
@@ -204,30 +193,26 @@ GET /api/moderations/stats
 
 ---
 
-## 🔗 Intégration avec Spring Boot
+## Intégration avec le Service Spring Boot
 
-### Configuration côté Node.js
+### Communication Inter-services
 
-Le service Node.js appelle automatiquement annonce-service lorsque:
+Le service de modération notifie de manière asynchrone le service principal des annonces via des appels HTTP. Les décisions de modération sont traduites ainsi :
 
-1. **Approbation** → Met à jour le statut à `PUBLIEE`
-   ```javascript
-   await annonceService.updateAnnonceStatut(annonceId, 'PUBLIEE');
-   ```
+- **Approbation** : Synchronisation de l'annonce ciblée vers le statut `PUBLIEE`
+- **Rejet** : Synchronisation de l'annonce ciblée vers le statut `REJETEE`
 
-2. **Rejet** → Met à jour le statut à `REJETEE`
-   ```javascript
-   await annonceService.updateAnnonceStatut(annonceId, 'REJETEE');
-   ```
+### Configuration de l'URL du Service Spring Boot
 
-### URL de l'API Spring Boot
+L'URL d'accès au service Spring Boot est définie dans le fichier `.env`:
 
-L'URL doit être configurée dans `.env`:
 ```env
 ANNONCE_SERVICE_URL=http://localhost:8080/api
 ```
 
-### Endpoints attendus côté Spring Boot
+### Format des Requêtes vers Spring Boot
+
+Les appels effectués vers le service Spring Boot utilisent le format suivant:
 
 ```http
 PATCH /api/annonces/{id}/statut
@@ -238,15 +223,17 @@ Content-Type: application/json
 }
 ```
 
-## 🧪 Tests avec Postman
+## Tests et Validation
 
-### 1. Tester l'approbation
+Exemples de requêtes pour tester les endpoints:
+
+### Approuver une annonce
 
 ```bash
 curl -X PATCH http://localhost:3002/api/moderations/1/approve
 ```
 
-### 2. Tester le rejet
+### Rejeter une annonce
 
 ```bash
 curl -X PATCH http://localhost:3002/api/moderations/2/reject \
@@ -254,21 +241,21 @@ curl -X PATCH http://localhost:3002/api/moderations/2/reject \
   -d '{"reason": "Contenu inapproprié"}'
 ```
 
-### 3. Récupérer les statistiques
+### Récupérer les statistiques
 
 ```bash
 curl http://localhost:3002/api/moderations/stats
 ```
 
-## 📖 Swagger Documentation
+## Documentation Interactive
 
-Accédez à la documentation interactive:
+La documentation interactive des API (OpenAPI/Swagger) est accessible à l'adresse suivante après le lancement du service:
 
 ```
 http://localhost:3002/api-docs
 ```
 
-## 📁 Structure du Projet
+## Structure du Projet
 
 ```
 moderation-service/
@@ -296,16 +283,18 @@ moderation-service/
 └── README.md
 ```
 
-## 🔧 Détails Techniques
+## Détails Techniques
 
-### Modèle de Données (Moderation)
+### Modèle de Données
+
+La table Moderation stocke les décisions de modération avec la structure suivante:
 
 ```javascript
 {
   id: String,           // MOD-timestamp-random
-  annonceId: Integer,   // ID from annonce-service
+  annonceId: Integer,   // Identifiant de l'annonce
   status: String,       // APPROUVEE | REJETEE
-  reason: String,       // Nullable
+  reason: String,       // Motif du rejet (nullable)
   createdAt: Date,
   updatedAt: Date
 }
@@ -313,12 +302,14 @@ moderation-service/
 
 ### Gestion des Erreurs
 
-- Connection errors avec Spring Boot: Service continue fonctionner (logs warning)
-- Annonce déjà modérée: Retourne 409 Conflict
-- Paramètres invalides: Retourne 400 Bad Request
-- Erreurs serveur: Retourne 500 Server Error
+Le service gère les erreurs selon les cas suivants:
 
-## 🔐 Variables d'Environnement
+- Erreurs de connexion avec Spring Boot: Le service continue de fonctionner et enregistre un avertissement
+- Annonce déjà modérée: Retourne le code HTTP 409 Conflict
+- Paramètres invalides: Retourne le code HTTP 400 Bad Request
+- Erreurs serveur: Retourne le code HTTP 500 Server Error
+
+## Variables d'Environnement
 
 | Variable | Description | Défaut |
 |----------|-------------|--------|
@@ -331,33 +322,27 @@ moderation-service/
 | `DB_PORT` | Port MySQL | 3306 |
 | `ANNONCE_SERVICE_URL` | URL Spring Boot | http://localhost:8080/api |
 
-## 🚨 Troubleshooting
+## Résolution des Problèmes
 
-### Erreur: "Cannot connect to annonce-service"
+### Erreur: Impossible de se connecter au service annonce-service
 
-1. Vérifier que le service Spring Boot est en cours d'exécution
-2. Vérifier l'URL dans `.env`: `ANNONCE_SERVICE_URL`
-3. Vérifier les logs du service Spring Boot
+Actions recommandées:
+- Vérifier que le service Spring Boot est en cours d'exécution sur le port 8080
+- Valider l'URL de connexion dans le fichier `.env` (variable ANNONCE_SERVICE_URL)
+- Consulter les logs du service Spring Boot pour identifier la cause
 
-### Erreur: "Cannot connect to database"
+### Erreur: Impossible de se connecter à la base de données
 
-1. Vérifier que MySQL est en cours d'exécution
-2. Vérifier les identifiants dans `.env`
-3. Vérifier que la base de données existe
+Actions recommandées:
+- Vérifier que le service MySQL est en cours d'exécution
+- Valider les identifiants d'accès dans le fichier `.env`
+- Confirmer que la base de données `moderation_db` existe
 
-### Erreur: "Annonce already moderated"
+### Erreur: Annonce déjà modérée
 
-Une annonce ne peut être modérée qu'une seule fois. Vérifier l'ID utilisé.
+Une annonce ne peut être modérée qu'une seule fois. Vérifier que l'ID fourni est correct et n'a pas été traité précédemment.
 
-## 📞 Support
 
-Pour les questions ou problèmes:
-- Email: support@senannoncess.sn
-- Documentation: http://localhost:3002/api-docs
-
-## 📄 Licence
-
-ISC
 
 ```
 
