@@ -1,7 +1,8 @@
 const Moderation = require('../models/moderation.model');
+const annonceService = require('./annonce.service');
 
 /**
- * Approve an annonce (Save to MySQL)
+ * Approve an annonce (Save to MySQL and notify annonce-service)
  * @param {number} annonceId 
  * @returns {Object} Moderation result
  */
@@ -22,6 +23,15 @@ const approveAnnonce = async (annonceId) => {
       reason: null
     });
 
+    // 3. Mettre à jour le statut dans le service Spring Boot
+    try {
+      await annonceService.updateAnnonceStatut(annonceId, 'PUBLIEE');
+      console.log(`Annonce ${annonceId} statut updated to PUBLIEE in annonce-service`);
+    } catch (annonceError) {
+      console.warn(`Warning: Annonce-service update failed: ${annonceError.message}`);
+      // On continue même si la mise à jour Spring Boot échoue, la modération est déjà enregistrée
+    }
+
     return moderation;
   } catch (error) {
     throw new Error(`Error approving annonce: ${error.message}`);
@@ -29,7 +39,7 @@ const approveAnnonce = async (annonceId) => {
 };
 
 /**
- * Reject an annonce (Save to MySQL)
+ * Reject an annonce (Save to MySQL and notify annonce-service)
  * @param {number} annonceId 
  * @param {string} reason 
  * @returns {Object} Moderation result
@@ -48,6 +58,15 @@ const rejectAnnonce = async (annonceId, reason = '') => {
       status: 'REJETEE',
       reason: reason || 'Annonce does not meet requirements'
     });
+
+    // 3. Mettre à jour le statut dans le service Spring Boot
+    try {
+      await annonceService.updateAnnonceStatut(annonceId, 'REJETEE');
+      console.log(`Annonce ${annonceId} statut updated to REJETEE in annonce-service`);
+    } catch (annonceError) {
+      console.warn(`Warning: Annonce-service update failed: ${annonceError.message}`);
+      // On continue même si la mise à jour Spring Boot échoue, la modération est déjà enregistrée
+    }
 
     return moderation;
   } catch (error) {

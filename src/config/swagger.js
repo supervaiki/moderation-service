@@ -8,7 +8,7 @@ const swaggerOptions = {
     info: {
       title: 'Moderation Service API - SenAnnonces.sn',
       version: '1.0.0',
-      description: 'Service de modération pour la plateforme SenAnnonces.sn. Valide et approuve/rejette les annonces avant publication.',
+      description: 'Service de modération pour la plateforme SenAnnonces.sn. Valide et approuve/rejette les annonces avant publication. Communique avec le service annonce-service (Spring Boot).',
       contact: {
         name: 'API Support',
         email: 'support@senannoncess.sn'
@@ -18,8 +18,16 @@ const swaggerOptions = {
       {
         url: 'http://localhost:3002',
         description: 'Development server'
+      },
+      {
+        url: 'http://localhost:3002/api',
+        description: 'API Base URL'
       }
     ],
+    externalDocs: {
+      description: 'Architecture diagram and workflow',
+      url: 'http://localhost:3002/api-docs'
+    },
     components: {
       schemas: {
         Annonce: {
@@ -31,7 +39,7 @@ const swaggerOptions = {
             },
             titre: {
               type: 'string',
-              description: 'Titre de l annonce'
+              description: 'Titre de l\'annonce'
             },
             description: {
               type: 'string',
@@ -39,16 +47,16 @@ const swaggerOptions = {
             },
             prix: {
               type: 'number',
-              description: 'Prix de l annonce'
+              description: 'Prix de l\'annonce'
             },
             ville: {
               type: 'string',
-              description: 'Ville où l annonce est publiée'
+              description: 'Ville où l\'annonce est publiée'
             },
             statut: {
               type: 'string',
               enum: ['EN_ATTENTE', 'APPROUVEE', 'REJETEE', 'PUBLIEE'],
-              description: 'Statut de l annonce'
+              description: 'Statut de l\'annonce'
             }
           }
         },
@@ -61,7 +69,7 @@ const swaggerOptions = {
             },
             annonceId: {
               type: 'integer',
-              description: 'ID de l annonce modérée'
+              description: 'ID de l\'annonce modérée'
             },
             status: {
               type: 'string',
@@ -77,6 +85,21 @@ const swaggerOptions = {
               type: 'string',
               format: 'date-time',
               description: 'Timestamp de la modération'
+            }
+          }
+        },
+        ApproveRequest: {
+          type: 'object',
+          description: 'Request body (optionnel)',
+          properties: {}
+        },
+        RejectRequest: {
+          type: 'object',
+          description: 'Request body pour rejeter une annonce',
+          properties: {
+            reason: {
+              type: 'string',
+              description: 'Raison du rejet'
             }
           }
         },
@@ -124,19 +147,19 @@ const swaggerOptions = {
           properties: {
             totalModerated: {
               type: 'integer',
-              description: 'Nombre total d annonces modérées'
+              description: 'Nombre total d\'annonces modérées'
             },
             approved: {
               type: 'integer',
-              description: 'Nombre d annonces approuvées'
+              description: 'Nombre d\'annonces approuvées'
             },
             rejected: {
               type: 'integer',
-              description: 'Nombre d annonces rejetées'
+              description: 'Nombre d\'annonces rejetées'
             },
             approvalRate: {
               type: 'number',
-              description: 'Taux d approbation en pourcentage'
+              description: 'Taux d\'approbation en pourcentage'
             },
             rejectionRate: {
               type: 'number',
@@ -149,7 +172,11 @@ const swaggerOptions = {
     tags: [
       {
         name: 'Moderation',
-        description: 'Endpoints de modération des annonces'
+        description: 'Endpoints de modération des annonces',
+        externalDocs: {
+          description: 'Workflow de modération',
+          url: 'http://localhost:3002/api-docs'
+        }
       }
     ]
   },
